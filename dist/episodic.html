@@ -1,0 +1,678 @@
+<title>Episodic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a shooting schedule. Slate-style brief bar on top, a Mon–Sun board of
+   30 episodes below, and a call-sheet panel for whichever episode is selected. */
+:root {
+  --bg: #f4f5f2; --panel: #ffffff; --ink: #16181b; --muted: #5d6268; --rule: #dcdfd9;
+  --tally: #d62839; --tally-ink: #ffffff; --field: #fafbf8;
+  --seg-answers: #2459c7; --seg-mundane: #b7791f; --seg-dayn: #d62839; --seg-proof: #1f8a5b; --seg-insider: #7b3fb5;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101214; --panel: #181b1e; --ink: #eceee9; --muted: #9aa0a6; --rule: #2b3034;
+    --tally: #ff4d5e; --tally-ink: #101214; --field: #121518;
+    --seg-answers: #6f9bff; --seg-mundane: #e3a93f; --seg-dayn: #ff4d5e; --seg-proof: #3fc38a; --seg-insider: #b88af0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101214; --panel: #181b1e; --ink: #eceee9; --muted: #9aa0a6; --rule: #2b3034;
+  --tally: #ff4d5e; --tally-ink: #101214; --field: #121518;
+  --seg-answers: #6f9bff; --seg-mundane: #e3a93f; --seg-dayn: #ff4d5e; --seg-proof: #3fc38a; --seg-insider: #b88af0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); }
+.page { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; }
+
+header.top { display: grid; gap: 10px; max-width: 760px; }
+.rec { display: inline-flex; align-items: center; gap: 8px; font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rec::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--tally); animation: blink 1.6s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .rec::before { animation: none; } }
+h1 { font: 800 clamp(34px, 6vw, 60px)/1 var(--display); font-stretch: 72%; letter-spacing: -.01em; margin: 0; text-wrap: balance; text-transform: uppercase; }
+.lede { margin: 0; color: var(--muted); font-size: 18px; max-width: 62ch; }
+
+form.slate { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 18px; display: grid; gap: 14px; }
+.fields { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+label { display: grid; gap: 5px; font: 600 11px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+input { font: 400 16px/1.3 var(--body); color: var(--ink); background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 10px 11px; min-width: 0; }
+input:focus-visible, button:focus-visible, .cell:focus-visible, a:focus-visible { outline: 2px solid var(--tally); outline-offset: 2px; }
+.slate-foot { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.hint { font-size: 14px; color: var(--muted); margin: 0; }
+button, .btn { font: 700 15px/1 var(--body); border-radius: 4px; padding: 12px 18px; cursor: pointer; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.primary { background: var(--tally); color: var(--tally-ink); }
+.quiet { background: transparent; color: var(--ink); border-color: var(--rule); }
+.quiet.small { padding: 8px 12px; font-size: 14px; }
+
+.show { display: grid; gap: 6px; }
+.show h2 { font: 800 clamp(24px, 3.4vw, 34px)/1.1 var(--display); font-stretch: 85%; margin: 0; text-wrap: balance; }
+.show p { margin: 0; color: var(--muted); max-width: 70ch; }
+.badge { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--rule); border-radius: 3px; padding: 4px 6px; color: var(--muted); justify-self: start; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.legend li { display: inline-flex; align-items: center; gap: 7px; }
+.dot { width: 10px; height: 10px; border-radius: 2px; background: var(--c); flex: none; }
+
+.workspace { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); align-items: start; }
+@media (max-width: 900px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
+
+.board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.dow { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 2px 4px; }
+.cell { background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid var(--c); border-radius: 4px; padding: 8px 9px 10px; text-align: left; font: inherit; color: inherit; cursor: pointer; display: grid; gap: 4px; align-content: start; min-height: 96px; }
+.cell:hover { border-color: var(--c); }
+.cell[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 12%, var(--panel)); border-color: var(--c); }
+.ep-no { font: 600 11px/1 var(--mono); color: var(--c); }
+.ep-title { font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+.cell.locked .ep-title { filter: blur(4px); user-select: none; }
+.cell .day-label { display: none; }
+@media (max-width: 640px) {
+  .board { grid-template-columns: minmax(0, 1fr); }
+  .dow { display: none; }
+  .cell { min-height: 0; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; }
+  .cell .day-label { display: inline; font: 600 11px/1 var(--mono); color: var(--muted); }
+  .ep-title { grid-column: 1 / -1; font-size: 15px; }
+}
+
+.sheet { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 20px; display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 900px) { .sheet { position: static; } }
+.sheet-head { display: grid; gap: 4px; }
+.sheet-head .seg { font: 600 12px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.sheet h3 { font: 800 22px/1.15 var(--display); font-stretch: 88%; margin: 0; text-wrap: balance; }
+.block { display: grid; gap: 6px; }
+.block h4 { margin: 0; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.hook { margin: 0; font-weight: 700; font-size: 17px; }
+.shots { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 6px; counter-reset: shot; }
+.shots li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; font-size: 15px; counter-increment: shot; }
+.shots li::before { content: "SH " counter(shot, decimal-leading-zero); font: 500 12px/1.9 var(--mono); color: var(--muted); }
+.caption { margin: 0; background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 10px 12px; font-size: 14px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.kw { font: 500 13px/1.3 var(--mono); color: var(--seg-answers); overflow-wrap: anywhere; }
+.why { font-size: 13px; color: var(--muted); margin: 0; border-top: 1px solid var(--rule); padding-top: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: 13px; color: var(--muted); }
+
+.unlock { background: var(--panel); border: 1px solid var(--tally); border-radius: 6px; padding: 20px; display: grid; gap: 12px; }
+.unlock h3 { margin: 0; font: 800 22px/1.15 var(--display); font-stretch: 88%; }
+.unlock p { margin: 0; color: var(--muted); }
+.unlock form { display: flex; flex-wrap: wrap; gap: 8px; }
+.unlock input { flex: 1 1 180px; font-family: var(--mono); text-transform: uppercase; }
+
+.why-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); border-top: 1px solid var(--rule); padding-top: 24px; }
+.why-grid h3 { margin: 0 0 6px; font: 800 18px/1.2 var(--display); font-stretch: 90%; }
+.why-grid p { margin: 0; color: var(--muted); font-size: 15px; }
+.stat { font: 600 13px/1 var(--mono); color: var(--tally); display: block; margin-bottom: 8px; }
+footer { font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="page">
+  <header class="top">
+    <span class="rec">Episodic · short-video season planner</span>
+    <h1>Your business, as a 30-day show</h1>
+    <p class="lede">Enter four details. Get a month of TikTok, Reels and Shorts episodes: the hook, the shots to film on your phone, and a caption that opens with what locals type into search.</p>
+  </header>
+
+  <form class="slate" id="brief" autocomplete="off">
+    <div class="fields">
+      <label for="f-name">Business name<input id="f-name" name="name" required value="Rosa's Panadería"></label>
+      <label for="f-type">Type of business<input id="f-type" name="type" required value="Bakery"></label>
+      <label for="f-city">City<input id="f-city" name="city" required value="San Antonio"></label>
+      <label for="f-specialty">Known for<input id="f-specialty" name="specialty" required value="Fresh conchas"></label>
+      <label for="f-audience">Who you serve<input id="f-audience" name="audience" value="Families and early commuters"></label>
+    </div>
+    <div class="slate-foot">
+      <p class="hint" id="brief-hint">Showing an example business. Replace it with yours.</p>
+      <button class="primary" type="submit">Plan my season</button>
+    </div>
+  </form>
+
+  <section class="show" aria-live="polite">
+    <span class="badge" id="example-badge">Example</span>
+    <h2 id="show-title"></h2>
+    <p id="premise"></p>
+  </section>
+
+  <ul class="legend" id="legend"></ul>
+
+  <div class="workspace">
+    <div>
+      <div class="board" id="board" role="group" aria-label="30-day episode schedule"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="quiet small" type="button" id="copy-all">Copy whole season</button>
+        <span class="status" id="copy-all-status"></span>
+      </div>
+    </div>
+    <div style="display:grid; gap:16px">
+      <aside class="sheet" id="sheet" aria-live="polite"></aside>
+      <section class="unlock" id="unlock" hidden>
+        <h3>Unlock the full season</h3>
+        <p><span id="locked-n"></span> more episodes are planned for this business. Pay once (<span id="price"></span>) and your receipt shows an unlock code. Unlocking covers every business you plan on this device.</p>
+        <a class="btn primary" id="pay" href="#" target="_blank" rel="noopener">Get my unlock code</a>
+        <form id="unlock-form">
+          <label for="f-code" class="sr" style="position:absolute;left:-9999px">Unlock code</label>
+          <input id="f-code" placeholder="Unlock code">
+          <button class="quiet" type="submit">Unlock</button>
+        </form>
+        <span class="status" id="unlock-status" role="status"></span>
+      </section>
+    </div>
+  </div>
+
+  <section class="why-grid">
+    <div><span class="stat">49% of US consumers</span><h3>People search TikTok now</h3><p>About half of US consumers have used TikTok as a search engine. Each caption puts a real local search phrase in its first 50 characters, where the algorithm and the viewer both look.</p></div>
+    <div><span class="stat">57% prefer series</span><h3>Series beat one-off posts</h3><p>Recurring segments and a numbered "Day N" arc give viewers a reason to come back tomorrow. A random post never does.</p></div>
+    <div><span class="stat">Filmed by you</span><h3>Real beats polished</h3><p>Shoppers are turning away from AI-made ads. Every episode is you, on your phone, in under 15 minutes. The planning is the only automated part.</p></div>
+  </section>
+
+  <footer>Episodic runs entirely in your browser. Nothing you type is sent anywhere.</footer>
+</div>
+
+<script>
+const CONFIG = {"payUrl":"","unlockHash":"","price":"$9","freeEpisodes":3};
+// Series formats, each tied to a 2026 short-video trend. The local generator
+// rotates through these; the AI generator gets them as a menu to pick from.
+
+const FORMATS = [
+  {
+    id: "mundane",
+    name: "The Everyday, Made Cinematic",
+    trend: "Romanticizing ordinary routines is one of the strongest TikTok/Reels themes of 2026.",
+    titles: [
+      "Opening up at {time}",
+      "The part of the job nobody films",
+      "Our most satisfying 10 seconds",
+      "What {pace} looks like at {name}",
+      "The ritual before the first customer",
+      "Closing time, the quiet version",
+    ],
+    hooks: [
+      "POV: it's {time} and {city} is still asleep",
+      "This is the most satisfying part of running a {type}",
+      "Nobody talks about this part of owning a {type}",
+      "Come with me to open {name}",
+    ],
+    shots: [
+      "Close-up of hands doing the first task of the day",
+      "Wide shot of the space before anyone arrives",
+      "Slow-motion detail shot of {specialty}",
+      "End on you looking at the camera, one-line sign-off",
+    ],
+  },
+  {
+    id: "answers",
+    name: "Ask a {role}",
+    trend: "Social is search: ~half of US consumers now search TikTok/Instagram before Google.",
+    titles: [
+      "How to choose a {type} in {city}",
+      "How much does {specialty} really cost?",
+      "{count} questions to ask before you book a {type}",
+      "The mistake everyone makes with {specialty}",
+      "Is {specialty} worth it? Honest answer",
+      "What a {role} wishes you knew",
+    ],
+    hooks: [
+      "If you're searching for a {type} in {city}, watch this first",
+      "The question I get asked every single day",
+      "A {role} answers the question you're too shy to ask",
+      "Before you spend money on {specialty}, know this",
+    ],
+    shots: [
+      "Talking head, question written as on-screen text",
+      "Cut to a quick demo or example that proves the answer",
+      "Show a real price, tool, or before/after",
+      "Recap the answer in one sentence on screen",
+    ],
+  },
+  {
+    id: "proof",
+    name: "Real Customers, Real Words",
+    trend: "70% of shoppers look for user-generated content before buying.",
+    titles: [
+      "Reading our newest review out loud",
+      "The review that made our week",
+      "Why {audience} keep coming back",
+      "A regular explains why they chose us",
+      "Our harshest review, and what we changed",
+    ],
+    hooks: [
+      "Someone left us this review and I need to talk about it",
+      "We asked our regulars one question",
+      "I didn't expect a customer to say this",
+      "Reading our worst review on camera",
+    ],
+    shots: [
+      "Screenshot of the review (get permission / blur the name)",
+      "Your genuine reaction, unscripted",
+      "B-roll of the product or service they mentioned",
+      "Thank the customer and invite others to share",
+    ],
+  },
+  {
+    id: "dayn",
+    name: "Day {n} of {challenge}",
+    trend: "Serialized, numbered content outperforms one-off posts; 57% prefer brands with original series.",
+    titles: [
+      "Day {n}: {challenge}",
+      "Day {n}: {challenge} (this one surprised me)",
+      "Day {n}: {challenge}, the hardest one yet",
+      "Day {n}: {challenge}, you picked this one",
+    ],
+    hooks: [
+      "Day {n} of {challenge}",
+      "Day {n}. Yesterday's comments chose today's challenge",
+      "Day {n} of {challenge} and it's getting harder",
+    ],
+    shots: [
+      "Big on-screen 'Day {n}' in the first frame",
+      "Show the attempt in 3 quick cuts",
+      "Reveal the result",
+      "Ask viewers what tomorrow's episode should be",
+    ],
+  },
+  {
+    id: "insider",
+    name: "Things I'd Never Do as a {role}",
+    trend: "Niche, specific, insider humor and honesty drive shares and saves in 2026.",
+    titles: [
+      "{count} things I'd never do as a {role}",
+      "Industry secret: {specialty} edition",
+      "Red flags when picking a {type}",
+      "What I'd do with $50 at a {type}",
+      "Unpopular opinion from a {role}",
+    ],
+    hooks: [
+      "As a {role}, I would never...",
+      "I'll probably get in trouble for sharing this",
+      "Red flags when you're choosing a {type}",
+      "Unpopular opinion: {specialty} is overrated unless...",
+    ],
+    shots: [
+      "Point at camera on each item, one quick cut per point",
+      "Show the right way vs the wrong way side by side",
+      "Keep it under 30 seconds, fast pace",
+      "End with a question to spark comments",
+    ],
+  },
+];
+
+const CHALLENGES = [
+  "making every customer's day a little better",
+  "trying one new {specialty} idea",
+  "showing one thing we do differently",
+  "answering your comments",
+];
+
+const TIMES = ["5:45am", "6:30am", "7am", "the crack of dawn"];
+const PACES = ["a Saturday rush", "a slow Tuesday", "the lunch rush", "a holiday week"];
+
+function slug(s) {
+  return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function roleFor(type) {
+  const t = String(type).toLowerCase().trim();
+  const map = {
+    bakery: "baker", cafe: "barista", "coffee shop": "barista", salon: "stylist",
+    barbershop: "barber", barber: "barber", gym: "trainer", restaurant: "chef",
+    "taco truck": "taquero", florist: "florist", dentist: "dentist",
+    plumber: "plumber", realtor: "realtor", "tattoo shop": "tattoo artist",
+    "nail salon": "nail tech", "auto shop": "mechanic", bookstore: "bookseller",
+    "yoga studio": "yoga teacher", photographer: "photographer",
+  };
+  return map[t] ?? `${t} owner`;
+}
+
+// Search phrases people actually type into TikTok/Instagram search.
+function buildKeywords({ type, city, specialty }) {
+  const t = type.toLowerCase();
+  const c = city.trim();
+  const s = specialty.toLowerCase();
+  return [
+    `best ${t} in ${c}`,
+    `${s} ${c}`,
+    `${t} near me`,
+    `${c} ${t}`,
+    `things to do in ${c}`,
+    `how to choose a ${t}`,
+    `${s} tips`,
+    `${c} small business`,
+  ];
+}
+
+function fill(template, vars) {
+  return template.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? `{${k}}`));
+}
+
+function pick(list, i) {
+  return list[((i % list.length) + list.length) % list.length];
+}
+
+const EXTRA = { CHALLENGES, TIMES, PACES };
+
+// Deterministic season generator. Works with no API key, so the free preview
+// costs nothing to serve and the app degrades gracefully if the AI call fails.
+
+
+
+const SEASON_LENGTH = 30;
+
+// Mon..Sun rotation: search answers and proof carry the most buying intent,
+// so they get the most slots; the numbered series runs through the week.
+const WEEK = ["answers", "mundane", "dayn", "proof", "insider", "answers", "dayn"];
+
+function normalizeInput(raw = {}) {
+  const clean = (v, max = 80) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+  const input = {
+    name: clean(raw.name),
+    type: clean(raw.type, 40),
+    city: clean(raw.city, 40),
+    specialty: clean(raw.specialty),
+    audience: clean(raw.audience) || "locals",
+    tone: clean(raw.tone, 20) || "warm",
+  };
+  const missing = ["name", "type", "city", "specialty"].filter((k) => !input[k]);
+  if (missing.length) {
+    const err = new Error(`Missing required field(s): ${missing.join(", ")}`);
+    err.status = 400;
+    throw err;
+  }
+  return input;
+}
+
+function generateSeason(rawInput) {
+  const input = normalizeInput(rawInput);
+  const role = roleFor(input.type);
+  const keywords = buildKeywords(input);
+  const nameTag = slug(input.name);
+  const cityTag = slug(input.city);
+  const typeTag = slug(input.type);
+  const localTag = /food|cafe|bakery|taco|restaurant|coffee|pizza|bar/i.test(input.type)
+    ? `#${cityTag}eats`
+    : "#shoplocal";
+
+  const byId = Object.fromEntries(FORMATS.map((f) => [f.id, f]));
+  const seen = {};
+  let dayCounter = 0;
+
+  const episodes = [];
+  for (let i = 0; i < SEASON_LENGTH; i++) {
+    const format = byId[WEEK[i % WEEK.length]];
+    const k = (seen[format.id] = (seen[format.id] ?? -1) + 1);
+    if (format.id === "dayn") dayCounter++;
+
+    const vars = {
+      ...input,
+      type: input.type.toLowerCase(),
+      specialty: input.specialty.toLowerCase(),
+      role,
+      n: dayCounter,
+      count: pick([3, 5, 4], k),
+      time: pick(EXTRA.TIMES, k),
+      pace: pick(EXTRA.PACES, k),
+      challenge: fill(pick(EXTRA.CHALLENGES, Math.floor(i / 7)), { specialty: input.specialty.toLowerCase() }),
+    };
+
+    const keyword = pick(keywords, i);
+    const title = fill(pick(format.titles, k), vars);
+    const hook = fill(pick(format.hooks, k), vars);
+    // Front-load the search keyword: TikTok shows ~50 chars before "more".
+    const caption = [
+      `${capitalize(keyword)} | ${title}.`,
+      captionBody(format.id, vars),
+      `📍 ${input.name}, ${input.city}`,
+    ].join(" ");
+
+    episodes.push({
+      n: i + 1,
+      series: fill(format.name, vars),
+      format: format.id,
+      title,
+      hook,
+      shots: format.shots.map((s) => fill(s, vars)),
+      onScreenText: title,
+      caption,
+      searchKeyword: keyword,
+      hashtags: unique([
+        `#${cityTag}`,
+        `#${typeTag}`,
+        `#${cityTag}${typeTag}`,
+        `#${nameTag}`,
+        `#smallbusiness`,
+        format.id === "answers" ? `#${typeTag}tips` : localTag,
+      ]),
+      cta: pick(CTAS[format.id], k),
+      trend: format.trend,
+    });
+  }
+
+  return {
+    showTitle: `${input.name}: ${pick(SHOW_TAGLINES, input.name.length)}`,
+    premise: `A daily short-video series from ${input.name}, a ${input.type.toLowerCase()} in ${input.city} known for ${input.specialty.toLowerCase()}. Five recurring segments rotate through the week so ${input.audience.toLowerCase()} always know what's coming next, and every caption is written to rank in TikTok and Instagram search.`,
+    cadence: "1 episode per day, 30 days. Film 5–7 in one batch session per week.",
+    keywords,
+    segments: FORMATS.map((f) => ({ name: fill(f.name, { role, n: "N", challenge: "…" }), why: f.trend })),
+    episodes,
+    source: "template",
+  };
+}
+
+const SHOW_TAGLINES = ["Behind the Counter", "The Daily Episode", "Open Every Day", "Tales from the Shop"];
+
+const CTAS = {
+  mundane: ["Follow for tomorrow's episode", "Save this for your next slow morning", "Come see it in person"],
+  answers: ["Save this before you book", "Send this to someone who needs it", "Drop your question for the next episode"],
+  proof: ["Leave us a review and we might read it next", "Tag someone who'd love this", "Come find out for yourself"],
+  dayn: ["Comment what tomorrow's challenge should be", "Follow so you don't miss tomorrow's episode", "Which day was your favorite?"],
+  insider: ["Agree or disagree? Comments", "Share with a friend who needs to hear this", "Follow for more honest takes"],
+};
+
+function captionBody(formatId, v) {
+  switch (formatId) {
+    case "answers": return `A ${v.role} in ${v.city} answers it honestly, no sales pitch.`;
+    case "proof": return `Real words from real ${v.audience.toLowerCase()}. Thank you for trusting us with ${v.specialty.toLowerCase()}.`;
+    case "dayn": return `Our daily series continues. Your comments pick what happens next.`;
+    case "insider": return `Insider notes from someone who does this every day.`;
+    default: return `The small moments behind ${v.specialty.toLowerCase()} at ${v.name}.`;
+  }
+}
+
+function capitalize(s) {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function unique(list) {
+  return [...new Set(list)];
+}
+
+
+const $ = (id) => document.getElementById(id);
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const UNLOCK_KEY = "episodic.unlocked";
+const BRIEF_KEY = "episodic.brief";
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+let season = null;
+let selected = 1;
+
+function unlocked() {
+  return !CONFIG.payUrl || store.get(UNLOCK_KEY) === CONFIG.unlockHash;
+}
+function isLocked(n) {
+  return !unlocked() && n > CONFIG.freeEpisodes;
+}
+
+function el(tag, props = {}, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "style") node.style.cssText = v;
+    else if (k.startsWith("aria-") || k === "role") node.setAttribute(k, v);
+    else node[k] = v;
+  }
+  node.append(...kids.filter((k) => k != null));
+  return node;
+}
+const segColor = (id) => `var(--seg-${id})`;
+
+function episodeText(ep) {
+  return [
+    `EP ${String(ep.n).padStart(2, "0")} · ${ep.series}`,
+    `Title: ${ep.title}`,
+    `Hook: ${ep.hook}`,
+    `Shots: ${ep.shots.join(" / ")}`,
+    `Caption: ${ep.caption}`,
+    `Hashtags: ${ep.hashtags.join(" ")}`,
+    `CTA: ${ep.cta}`,
+  ].join("\n");
+}
+
+async function copy(text, statusEl, done = "Copied") {
+  try {
+    await navigator.clipboard.writeText(text);
+    statusEl.textContent = done;
+  } catch {
+    statusEl.textContent = "Your browser blocked copying. Select the text and copy it by hand.";
+  }
+}
+
+function renderLegend() {
+  const seen = new Map();
+  for (const ep of season.episodes) if (!seen.has(ep.format)) seen.set(ep.format, ep.series.replace(/^Day \d+ of .*/, "Day N of…"));
+  $("legend").replaceChildren(...[...seen].map(([id, name]) =>
+    el("li", {}, el("span", { className: "dot", style: `--c:${segColor(id)}` }), name)));
+}
+
+function renderBoard() {
+  const cells = DOW.map((d) => el("div", { className: "dow", textContent: d }));
+  for (const ep of season.episodes) {
+    const locked = isLocked(ep.n);
+    const cell = el("button", {
+      type: "button",
+      className: `cell${locked ? " locked" : ""}`,
+      style: `--c:${segColor(ep.format)}`,
+      "aria-pressed": String(ep.n === selected),
+      "aria-label": locked ? `Episode ${ep.n}, locked` : `Episode ${ep.n}: ${ep.title}`,
+    },
+      el("span", { className: "ep-no", textContent: `EP ${String(ep.n).padStart(2, "0")}${locked ? " · locked" : ""}` }),
+      el("span", { className: "day-label", textContent: DOW[(ep.n - 1) % 7] }),
+      el("span", { className: "ep-title", textContent: locked ? "Unlock to see this episode" : ep.title }),
+    );
+    cell.addEventListener("click", () => {
+      selected = ep.n;
+      renderBoard();
+      renderSheet();
+      if (matchMedia("(max-width: 900px)").matches) $("sheet").scrollIntoView({ block: "start" });
+    });
+    cells.push(cell);
+  }
+  $("board").replaceChildren(...cells);
+}
+
+function renderSheet() {
+  const ep = season.episodes[selected - 1];
+  const sheet = $("sheet");
+  sheet.style.setProperty("--c", segColor(ep.format));
+  if (isLocked(ep.n)) {
+    sheet.replaceChildren(
+      el("div", { className: "sheet-head" },
+        el("span", { className: "seg", textContent: `EP ${String(ep.n).padStart(2, "0")} · ${DOW[(ep.n - 1) % 7]}` }),
+        el("h3", { textContent: "This episode is locked" })),
+      el("p", { className: "hint", textContent: `The first ${CONFIG.freeEpisodes} episodes are free. Unlock below to see all ${season.episodes.length}.` }),
+    );
+    return;
+  }
+  const status = el("span", { className: "status", role: "status" });
+  const copyBtn = el("button", { type: "button", className: "quiet small", textContent: "Copy caption + hashtags" });
+  copyBtn.addEventListener("click", () => copy(`${ep.caption}\n\n${ep.hashtags.join(" ")}`, status));
+  sheet.replaceChildren(
+    el("div", { className: "sheet-head" },
+      el("span", { className: "seg", textContent: `EP ${String(ep.n).padStart(2, "0")} · ${DOW[(ep.n - 1) % 7]} · ${ep.series}` }),
+      el("h3", { textContent: ep.title })),
+    el("div", { className: "block" }, el("h4", { textContent: "Say or show in the first 2 seconds" }), el("p", { className: "hook", textContent: `“${ep.hook}”` })),
+    el("div", { className: "block" }, el("h4", { textContent: "Shot list" }), el("ol", { className: "shots" }, ...ep.shots.map((s) => el("li", { textContent: s })))),
+    el("div", { className: "block" }, el("h4", { textContent: "On-screen text" }), el("p", { style: "margin:0", textContent: ep.onScreenText })),
+    el("div", { className: "block" }, el("h4", { textContent: "Search phrase this targets" }), el("span", { className: "kw", textContent: ep.searchKeyword })),
+    el("div", { className: "block" }, el("h4", { textContent: "Caption" }), el("p", { className: "caption", textContent: `${ep.caption}\n\n${ep.hashtags.join(" ")}` })),
+    el("div", { className: "row" }, copyBtn, status),
+    el("p", { className: "hint", style: "margin:0", textContent: `End with: ${ep.cta}` }),
+    el("p", { className: "why", textContent: `Why this segment: ${ep.trend}` }),
+  );
+}
+
+function renderUnlock() {
+  const show = !unlocked();
+  $("unlock").hidden = !show;
+  if (!show) return;
+  $("locked-n").textContent = season.episodes.length - CONFIG.freeEpisodes;
+  $("price").textContent = CONFIG.price;
+  $("pay").href = CONFIG.payUrl;
+}
+
+function render(isExample) {
+  $("example-badge").hidden = !isExample;
+  $("brief-hint").textContent = isExample ? "Showing an example business. Replace it with yours." : "Edit any field and plan again for a fresh season.";
+  $("show-title").textContent = season.showTitle;
+  $("premise").textContent = season.premise;
+  renderLegend();
+  renderBoard();
+  renderSheet();
+  renderUnlock();
+  $("copy-all").hidden = !unlocked();
+}
+
+function plan(brief, isExample) {
+  season = generateSeason(brief);
+  selected = 1;
+  render(isExample);
+}
+
+$("brief").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const brief = Object.fromEntries(new FormData(e.target));
+  store.set(BRIEF_KEY, JSON.stringify(brief));
+  try {
+    plan(brief, false);
+    $("show-title").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  } catch (err) {
+    $("brief-hint").textContent = err.message;
+  }
+});
+
+$("copy-all").addEventListener("click", () =>
+  copy(season.episodes.map(episodeText).join("\n\n"), $("copy-all-status"), `Copied all ${season.episodes.length} episodes`));
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+$("unlock-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const code = $("f-code").value.trim().toUpperCase();
+  if (!code) return;
+  if ((await sha256(code)) === CONFIG.unlockHash) {
+    store.set(UNLOCK_KEY, CONFIG.unlockHash);
+    render($("example-badge").hidden === false);
+  } else {
+    $("unlock-status").textContent = "That code doesn't match. Check your payment receipt and try again.";
+  }
+});
+
+(function start() {
+  let brief = null;
+  try { brief = JSON.parse(store.get(BRIEF_KEY) || "null"); } catch {}
+  if (brief) {
+    for (const [k, v] of Object.entries(brief)) { const input = $("brief").elements[k]; if (input) input.value = v; }
+    try { plan(brief, false); return; } catch {}
+  }
+  plan(Object.fromEntries(new FormData($("brief"))), true);
+})();
+</script>

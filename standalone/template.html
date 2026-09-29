@@ -1,0 +1,364 @@
+<title>Episodic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a shooting schedule. Slate-style brief bar on top, a Mon–Sun board of
+   30 episodes below, and a call-sheet panel for whichever episode is selected. */
+:root {
+  --bg: #f4f5f2; --panel: #ffffff; --ink: #16181b; --muted: #5d6268; --rule: #dcdfd9;
+  --tally: #d62839; --tally-ink: #ffffff; --field: #fafbf8;
+  --seg-answers: #2459c7; --seg-mundane: #b7791f; --seg-dayn: #d62839; --seg-proof: #1f8a5b; --seg-insider: #7b3fb5;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101214; --panel: #181b1e; --ink: #eceee9; --muted: #9aa0a6; --rule: #2b3034;
+    --tally: #ff4d5e; --tally-ink: #101214; --field: #121518;
+    --seg-answers: #6f9bff; --seg-mundane: #e3a93f; --seg-dayn: #ff4d5e; --seg-proof: #3fc38a; --seg-insider: #b88af0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101214; --panel: #181b1e; --ink: #eceee9; --muted: #9aa0a6; --rule: #2b3034;
+  --tally: #ff4d5e; --tally-ink: #101214; --field: #121518;
+  --seg-answers: #6f9bff; --seg-mundane: #e3a93f; --seg-dayn: #ff4d5e; --seg-proof: #3fc38a; --seg-insider: #b88af0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); }
+.page { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; }
+
+header.top { display: grid; gap: 10px; max-width: 760px; }
+.rec { display: inline-flex; align-items: center; gap: 8px; font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rec::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--tally); animation: blink 1.6s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .rec::before { animation: none; } }
+h1 { font: 800 clamp(34px, 6vw, 60px)/1 var(--display); font-stretch: 72%; letter-spacing: -.01em; margin: 0; text-wrap: balance; text-transform: uppercase; }
+.lede { margin: 0; color: var(--muted); font-size: 18px; max-width: 62ch; }
+
+form.slate { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 18px; display: grid; gap: 14px; }
+.fields { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+label { display: grid; gap: 5px; font: 600 11px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+input { font: 400 16px/1.3 var(--body); color: var(--ink); background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 10px 11px; min-width: 0; }
+input:focus-visible, button:focus-visible, .cell:focus-visible, a:focus-visible { outline: 2px solid var(--tally); outline-offset: 2px; }
+.slate-foot { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.hint { font-size: 14px; color: var(--muted); margin: 0; }
+button, .btn { font: 700 15px/1 var(--body); border-radius: 4px; padding: 12px 18px; cursor: pointer; border: 1px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.primary { background: var(--tally); color: var(--tally-ink); }
+.quiet { background: transparent; color: var(--ink); border-color: var(--rule); }
+.quiet.small { padding: 8px 12px; font-size: 14px; }
+
+.show { display: grid; gap: 6px; }
+.show h2 { font: 800 clamp(24px, 3.4vw, 34px)/1.1 var(--display); font-stretch: 85%; margin: 0; text-wrap: balance; }
+.show p { margin: 0; color: var(--muted); max-width: 70ch; }
+.badge { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; border: 1px solid var(--rule); border-radius: 3px; padding: 4px 6px; color: var(--muted); justify-self: start; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.legend li { display: inline-flex; align-items: center; gap: 7px; }
+.dot { width: 10px; height: 10px; border-radius: 2px; background: var(--c); flex: none; }
+
+.workspace { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(0, 380px); align-items: start; }
+@media (max-width: 900px) { .workspace { grid-template-columns: minmax(0, 1fr); } }
+
+.board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.dow { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 2px 4px; }
+.cell { background: var(--panel); border: 1px solid var(--rule); border-top: 3px solid var(--c); border-radius: 4px; padding: 8px 9px 10px; text-align: left; font: inherit; color: inherit; cursor: pointer; display: grid; gap: 4px; align-content: start; min-height: 96px; }
+.cell:hover { border-color: var(--c); }
+.cell[aria-pressed="true"] { background: color-mix(in srgb, var(--c) 12%, var(--panel)); border-color: var(--c); }
+.ep-no { font: 600 11px/1 var(--mono); color: var(--c); }
+.ep-title { font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+.cell.locked .ep-title { filter: blur(4px); user-select: none; }
+.cell .day-label { display: none; }
+@media (max-width: 640px) {
+  .board { grid-template-columns: minmax(0, 1fr); }
+  .dow { display: none; }
+  .cell { min-height: 0; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; }
+  .cell .day-label { display: inline; font: 600 11px/1 var(--mono); color: var(--muted); }
+  .ep-title { grid-column: 1 / -1; font-size: 15px; }
+}
+
+.sheet { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 20px; display: grid; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 900px) { .sheet { position: static; } }
+.sheet-head { display: grid; gap: 4px; }
+.sheet-head .seg { font: 600 12px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--c); }
+.sheet h3 { font: 800 22px/1.15 var(--display); font-stretch: 88%; margin: 0; text-wrap: balance; }
+.block { display: grid; gap: 6px; }
+.block h4 { margin: 0; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.hook { margin: 0; font-weight: 700; font-size: 17px; }
+.shots { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 6px; counter-reset: shot; }
+.shots li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 8px; font-size: 15px; counter-increment: shot; }
+.shots li::before { content: "SH " counter(shot, decimal-leading-zero); font: 500 12px/1.9 var(--mono); color: var(--muted); }
+.caption { margin: 0; background: var(--field); border: 1px solid var(--rule); border-radius: 4px; padding: 10px 12px; font-size: 14px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.kw { font: 500 13px/1.3 var(--mono); color: var(--seg-answers); overflow-wrap: anywhere; }
+.why { font-size: 13px; color: var(--muted); margin: 0; border-top: 1px solid var(--rule); padding-top: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: 13px; color: var(--muted); }
+
+.unlock { background: var(--panel); border: 1px solid var(--tally); border-radius: 6px; padding: 20px; display: grid; gap: 12px; }
+.unlock h3 { margin: 0; font: 800 22px/1.15 var(--display); font-stretch: 88%; }
+.unlock p { margin: 0; color: var(--muted); }
+.unlock form { display: flex; flex-wrap: wrap; gap: 8px; }
+.unlock input { flex: 1 1 180px; font-family: var(--mono); text-transform: uppercase; }
+
+.why-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); border-top: 1px solid var(--rule); padding-top: 24px; }
+.why-grid h3 { margin: 0 0 6px; font: 800 18px/1.2 var(--display); font-stretch: 90%; }
+.why-grid p { margin: 0; color: var(--muted); font-size: 15px; }
+.stat { font: 600 13px/1 var(--mono); color: var(--tally); display: block; margin-bottom: 8px; }
+footer { font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="page">
+  <header class="top">
+    <span class="rec">Episodic · short-video season planner</span>
+    <h1>Your business, as a 30-day show</h1>
+    <p class="lede">Enter four details. Get a month of TikTok, Reels and Shorts episodes: the hook, the shots to film on your phone, and a caption that opens with what locals type into search.</p>
+  </header>
+
+  <form class="slate" id="brief" autocomplete="off">
+    <div class="fields">
+      <label for="f-name">Business name<input id="f-name" name="name" required value="Rosa's Panadería"></label>
+      <label for="f-type">Type of business<input id="f-type" name="type" required value="Bakery"></label>
+      <label for="f-city">City<input id="f-city" name="city" required value="San Antonio"></label>
+      <label for="f-specialty">Known for<input id="f-specialty" name="specialty" required value="Fresh conchas"></label>
+      <label for="f-audience">Who you serve<input id="f-audience" name="audience" value="Families and early commuters"></label>
+    </div>
+    <div class="slate-foot">
+      <p class="hint" id="brief-hint">Showing an example business. Replace it with yours.</p>
+      <button class="primary" type="submit">Plan my season</button>
+    </div>
+  </form>
+
+  <section class="show" aria-live="polite">
+    <span class="badge" id="example-badge">Example</span>
+    <h2 id="show-title"></h2>
+    <p id="premise"></p>
+  </section>
+
+  <ul class="legend" id="legend"></ul>
+
+  <div class="workspace">
+    <div>
+      <div class="board" id="board" role="group" aria-label="30-day episode schedule"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="quiet small" type="button" id="copy-all">Copy whole season</button>
+        <span class="status" id="copy-all-status"></span>
+      </div>
+    </div>
+    <div style="display:grid; gap:16px">
+      <aside class="sheet" id="sheet" aria-live="polite"></aside>
+      <section class="unlock" id="unlock" hidden>
+        <h3>Unlock the full season</h3>
+        <p><span id="locked-n"></span> more episodes are planned for this business. Pay once (<span id="price"></span>) and your receipt shows an unlock code. Unlocking covers every business you plan on this device.</p>
+        <a class="btn primary" id="pay" href="#" target="_blank" rel="noopener">Get my unlock code</a>
+        <form id="unlock-form">
+          <label for="f-code" class="sr" style="position:absolute;left:-9999px">Unlock code</label>
+          <input id="f-code" placeholder="Unlock code">
+          <button class="quiet" type="submit">Unlock</button>
+        </form>
+        <span class="status" id="unlock-status" role="status"></span>
+      </section>
+    </div>
+  </div>
+
+  <section class="why-grid">
+    <div><span class="stat">49% of US consumers</span><h3>People search TikTok now</h3><p>About half of US consumers have used TikTok as a search engine. Each caption puts a real local search phrase in its first 50 characters, where the algorithm and the viewer both look.</p></div>
+    <div><span class="stat">57% prefer series</span><h3>Series beat one-off posts</h3><p>Recurring segments and a numbered "Day N" arc give viewers a reason to come back tomorrow. A random post never does.</p></div>
+    <div><span class="stat">Filmed by you</span><h3>Real beats polished</h3><p>Shoppers are turning away from AI-made ads. Every episode is you, on your phone, in under 15 minutes. The planning is the only automated part.</p></div>
+  </section>
+
+  <footer>Episodic runs entirely in your browser. Nothing you type is sent anywhere.</footer>
+</div>
+
+<script>
+/*__CONFIG__*/
+/*__GENERATOR__*/
+
+const $ = (id) => document.getElementById(id);
+const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const UNLOCK_KEY = "episodic.unlocked";
+const BRIEF_KEY = "episodic.brief";
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+let season = null;
+let selected = 1;
+
+function unlocked() {
+  return !CONFIG.payUrl || store.get(UNLOCK_KEY) === CONFIG.unlockHash;
+}
+function isLocked(n) {
+  return !unlocked() && n > CONFIG.freeEpisodes;
+}
+
+function el(tag, props = {}, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "style") node.style.cssText = v;
+    else if (k.startsWith("aria-") || k === "role") node.setAttribute(k, v);
+    else node[k] = v;
+  }
+  node.append(...kids.filter((k) => k != null));
+  return node;
+}
+const segColor = (id) => `var(--seg-${id})`;
+
+function episodeText(ep) {
+  return [
+    `EP ${String(ep.n).padStart(2, "0")} · ${ep.series}`,
+    `Title: ${ep.title}`,
+    `Hook: ${ep.hook}`,
+    `Shots: ${ep.shots.join(" / ")}`,
+    `Caption: ${ep.caption}`,
+    `Hashtags: ${ep.hashtags.join(" ")}`,
+    `CTA: ${ep.cta}`,
+  ].join("\n");
+}
+
+async function copy(text, statusEl, done = "Copied") {
+  try {
+    await navigator.clipboard.writeText(text);
+    statusEl.textContent = done;
+  } catch {
+    statusEl.textContent = "Your browser blocked copying. Select the text and copy it by hand.";
+  }
+}
+
+function renderLegend() {
+  const seen = new Map();
+  for (const ep of season.episodes) if (!seen.has(ep.format)) seen.set(ep.format, ep.series.replace(/^Day \d+ of .*/, "Day N of…"));
+  $("legend").replaceChildren(...[...seen].map(([id, name]) =>
+    el("li", {}, el("span", { className: "dot", style: `--c:${segColor(id)}` }), name)));
+}
+
+function renderBoard() {
+  const cells = DOW.map((d) => el("div", { className: "dow", textContent: d }));
+  for (const ep of season.episodes) {
+    const locked = isLocked(ep.n);
+    const cell = el("button", {
+      type: "button",
+      className: `cell${locked ? " locked" : ""}`,
+      style: `--c:${segColor(ep.format)}`,
+      "aria-pressed": String(ep.n === selected),
+      "aria-label": locked ? `Episode ${ep.n}, locked` : `Episode ${ep.n}: ${ep.title}`,
+    },
+      el("span", { className: "ep-no", textContent: `EP ${String(ep.n).padStart(2, "0")}${locked ? " · locked" : ""}` }),
+      el("span", { className: "day-label", textContent: DOW[(ep.n - 1) % 7] }),
+      el("span", { className: "ep-title", textContent: locked ? "Unlock to see this episode" : ep.title }),
+    );
+    cell.addEventListener("click", () => {
+      selected = ep.n;
+      renderBoard();
+      renderSheet();
+      if (matchMedia("(max-width: 900px)").matches) $("sheet").scrollIntoView({ block: "start" });
+    });
+    cells.push(cell);
+  }
+  $("board").replaceChildren(...cells);
+}
+
+function renderSheet() {
+  const ep = season.episodes[selected - 1];
+  const sheet = $("sheet");
+  sheet.style.setProperty("--c", segColor(ep.format));
+  if (isLocked(ep.n)) {
+    sheet.replaceChildren(
+      el("div", { className: "sheet-head" },
+        el("span", { className: "seg", textContent: `EP ${String(ep.n).padStart(2, "0")} · ${DOW[(ep.n - 1) % 7]}` }),
+        el("h3", { textContent: "This episode is locked" })),
+      el("p", { className: "hint", textContent: `The first ${CONFIG.freeEpisodes} episodes are free. Unlock below to see all ${season.episodes.length}.` }),
+    );
+    return;
+  }
+  const status = el("span", { className: "status", role: "status" });
+  const copyBtn = el("button", { type: "button", className: "quiet small", textContent: "Copy caption + hashtags" });
+  copyBtn.addEventListener("click", () => copy(`${ep.caption}\n\n${ep.hashtags.join(" ")}`, status));
+  sheet.replaceChildren(
+    el("div", { className: "sheet-head" },
+      el("span", { className: "seg", textContent: `EP ${String(ep.n).padStart(2, "0")} · ${DOW[(ep.n - 1) % 7]} · ${ep.series}` }),
+      el("h3", { textContent: ep.title })),
+    el("div", { className: "block" }, el("h4", { textContent: "Say or show in the first 2 seconds" }), el("p", { className: "hook", textContent: `“${ep.hook}”` })),
+    el("div", { className: "block" }, el("h4", { textContent: "Shot list" }), el("ol", { className: "shots" }, ...ep.shots.map((s) => el("li", { textContent: s })))),
+    el("div", { className: "block" }, el("h4", { textContent: "On-screen text" }), el("p", { style: "margin:0", textContent: ep.onScreenText })),
+    el("div", { className: "block" }, el("h4", { textContent: "Search phrase this targets" }), el("span", { className: "kw", textContent: ep.searchKeyword })),
+    el("div", { className: "block" }, el("h4", { textContent: "Caption" }), el("p", { className: "caption", textContent: `${ep.caption}\n\n${ep.hashtags.join(" ")}` })),
+    el("div", { className: "row" }, copyBtn, status),
+    el("p", { className: "hint", style: "margin:0", textContent: `End with: ${ep.cta}` }),
+    el("p", { className: "why", textContent: `Why this segment: ${ep.trend}` }),
+  );
+}
+
+function renderUnlock() {
+  const show = !unlocked();
+  $("unlock").hidden = !show;
+  if (!show) return;
+  $("locked-n").textContent = season.episodes.length - CONFIG.freeEpisodes;
+  $("price").textContent = CONFIG.price;
+  $("pay").href = CONFIG.payUrl;
+}
+
+function render(isExample) {
+  $("example-badge").hidden = !isExample;
+  $("brief-hint").textContent = isExample ? "Showing an example business. Replace it with yours." : "Edit any field and plan again for a fresh season.";
+  $("show-title").textContent = season.showTitle;
+  $("premise").textContent = season.premise;
+  renderLegend();
+  renderBoard();
+  renderSheet();
+  renderUnlock();
+  $("copy-all").hidden = !unlocked();
+}
+
+function plan(brief, isExample) {
+  season = generateSeason(brief);
+  selected = 1;
+  render(isExample);
+}
+
+$("brief").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const brief = Object.fromEntries(new FormData(e.target));
+  store.set(BRIEF_KEY, JSON.stringify(brief));
+  try {
+    plan(brief, false);
+    $("show-title").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  } catch (err) {
+    $("brief-hint").textContent = err.message;
+  }
+});
+
+$("copy-all").addEventListener("click", () =>
+  copy(season.episodes.map(episodeText).join("\n\n"), $("copy-all-status"), `Copied all ${season.episodes.length} episodes`));
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+$("unlock-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const code = $("f-code").value.trim().toUpperCase();
+  if (!code) return;
+  if ((await sha256(code)) === CONFIG.unlockHash) {
+    store.set(UNLOCK_KEY, CONFIG.unlockHash);
+    render($("example-badge").hidden === false);
+  } else {
+    $("unlock-status").textContent = "That code doesn't match. Check your payment receipt and try again.";
+  }
+});
+
+(function start() {
+  let brief = null;
+  try { brief = JSON.parse(store.get(BRIEF_KEY) || "null"); } catch {}
+  if (brief) {
+    for (const [k, v] of Object.entries(brief)) { const input = $("brief").elements[k]; if (input) input.value = v; }
+    try { plan(brief, false); return; } catch {}
+  }
+  plan(Object.fromEntries(new FormData($("brief"))), true);
+})();
+</script>

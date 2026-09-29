@@ -58,7 +58,7 @@ export function generateSeason(rawInput) {
       count: pick([3, 5, 4], k),
       time: pick(EXTRA.TIMES, k),
       pace: pick(EXTRA.PACES, k),
-      challenge: fill(pick(EXTRA.CHALLENGES, Math.floor(i / 7)), input),
+      challenge: fill(pick(EXTRA.CHALLENGES, Math.floor(i / 7)), { specialty: input.specialty.toLowerCase() }),
     };
 
     const keyword = pick(keywords, i);

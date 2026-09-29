@@ -36,3 +36,15 @@ Build: `npm install` · Start: `npm start` · Health check: `/healthz`. Set the 
 | `src/license.js` | Signed, stateless license tokens |
 | `src/server.js` | HTTP server, API routes, paywall, rate limit |
 | `public/` | Single-page frontend |
+
+## Zero-infrastructure version
+
+`node scripts/build-standalone.mjs` bundles the generator into one self-contained page, `dist/episodic.html`. It needs no server, no API key and no hosting account; everything runs in the browser.
+
+To turn on the paywall, pass a payment link and an unlock code. The code is stored only as a SHA-256 hash, and buyers see it on their payment receipt:
+
+```bash
+node scripts/build-standalone.mjs --pay-url=https://yourname.gumroad.com/l/episodic --unlock-code=SEASON-XXXX --price='$9'
+```
+
+The check runs client-side, so a determined user could bypass it. That's an acceptable trade for a $9 impulse purchase with no server to maintain.
