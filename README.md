@@ -48,3 +48,9 @@ node scripts/build-standalone.mjs --pay-url=https://yourname.gumroad.com/l/episo
 ```
 
 The check runs client-side, so a determined user could bypass it. That's an acceptable trade for a $9 impulse purchase with no server to maintain.
+
+## Search landing pages
+
+`npm run build:seo` generates `docs/`: one static page per business type (for example `docs/tiktok-ideas-for-bakery/`), each showing a sample 30-day plan from the template generator with links to the free app and the Gumroad checkout. It also writes an index page, `sitemap.xml` and `robots.txt`.
+
+To publish, turn on GitHub Pages (Settings → Pages → Deploy from a branch → this branch, `/docs` folder). The default base URL is `https://gchapa1185.github.io/Survival-`; pass `--base-url=` if the site lives elsewhere. Add business types in `scripts/seo-businesses.mjs` and rebuild.

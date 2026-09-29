@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gchapa1185.github.io/Survival-/sitemap.xml
