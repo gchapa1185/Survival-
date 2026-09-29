@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Episodic</title>
+  <meta name="description" content="Turn your local business into a 30-day short-video series that shows up in TikTok and Instagram search.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="wrap hero">
+    <p class="eyebrow">For local businesses on TikTok, Reels &amp; Shorts</p>
+    <h1>Stop wondering what to post.<br>Get a 30-episode season in 20 seconds.</h1>
+    <p class="lede">Episodic turns your business into a recurring show, with hooks, shot lists and captions written to rank in TikTok and Instagram search. You film it on your phone; we plan every day of it.</p>
+  </header>
+
+  <main class="wrap">
+    <form id="brief" class="card">
+      <div class="grid">
+        <label>Business name<input name="name" required placeholder="Rosa's Panadería"></label>
+        <label>Type of business<input name="type" required placeholder="Bakery"></label>
+        <label>City<input name="city" required placeholder="San Antonio"></label>
+        <label>Known for<input name="specialty" required placeholder="Fresh conchas"></label>
+        <label>Who you serve<input name="audience" placeholder="Families and early commuters"></label>
+        <label>Tone
+          <select name="tone"><option>warm</option><option>funny</option><option>expert</option><option>bold</option></select>
+        </label>
+      </div>
+      <button type="submit" id="go">Plan my season</button>
+      <p id="error" class="error" role="alert" hidden></p>
+    </form>
+
+    <section id="result" hidden>
+      <div class="result-head">
+        <div>
+          <h2 id="show-title"></h2>
+          <p id="premise" class="muted"></p>
+          <p id="cadence" class="muted small"></p>
+        </div>
+        <button id="export" class="ghost" hidden>Download CSV</button>
+      </div>
+      <details class="card small">
+        <summary>Search phrases this season targets</summary>
+        <ul id="keywords" class="chips"></ul>
+      </details>
+      <ol id="episodes" class="episodes"></ol>
+      <div id="paywall" class="card paywall" hidden>
+        <h3><span id="locked-count"></span> more episodes are ready</h3>
+        <p>Unlock the full season, unlimited new seasons, and AI-written episodes tailored to your business.</p>
+        <button id="upgrade">Unlock for <span id="price"></span></button>
+        <p class="muted small">Cancel anytime. Less than one hour of a freelancer's time.</p>
+      </div>
+    </section>
+
+    <section class="why">
+      <h2>Why this works in 2026</h2>
+      <div class="grid three">
+        <div class="card"><h3>People search TikTok now</h3><p>About half of US consumers use TikTok or Instagram as a search engine. Every caption leads with a phrase your customers actually type.</p></div>
+        <div class="card"><h3>Series beat one-offs</h3><p>Recurring, numbered episodes build a habit. Viewers come back for "Day 12" in a way they never do for a random post.</p></div>
+        <div class="card"><h3>Real beats polished</h3><p>Audiences are tuning out AI-generated ads. Every episode is you, filmed on your phone in under 15 minutes.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap muted small">Episodic · Made for small businesses</footer>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
