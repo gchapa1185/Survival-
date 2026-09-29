@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Episodic: Full Season Unlock</title>
+<style>
+/* Layout: a production call sheet. Hero with a live "week one" schedule board,
+   a sample episode sheet, then proof, FAQ and a closing buy block. */
+:root {
+  --bg: #f4f5f2; --panel: #ffffff; --ink: #16181b; --muted: #555a60; --rule: #dcdfd9;
+  --tally: #c81f31; --tally-ink: #ffffff; --field: #fafbf8;
+  --seg-answers: #2459c7; --seg-mundane: #9a6512; --seg-dayn: #c81f31; --seg-proof: #1b7a50; --seg-insider: #7b3fb5;
+  --display: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101214; --panel: #181b1e; --ink: #eceee9; --muted: #a3a9ae; --rule: #2d3236;
+    --tally: #ff5263; --tally-ink: #101214; --field: #131619;
+    --seg-answers: #7aa3ff; --seg-mundane: #e6ad45; --seg-dayn: #ff5263; --seg-proof: #45c88f; --seg-insider: #bd92f2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101214; --panel: #181b1e; --ink: #eceee9; --muted: #a3a9ae; --rule: #2d3236;
+  --tally: #ff5263; --tally-ink: #101214; --field: #131619;
+  --seg-answers: #7aa3ff; --seg-mundane: #e6ad45; --seg-dayn: #ff5263; --seg-proof: #45c88f; --seg-insider: #bd92f2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation: none !important; transition: none !important; } }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: 16px; }
+section { padding-block: 64px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -.01em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(38px, 7vw, 72px); line-height: .98; text-transform: uppercase; font-stretch: condensed; }
+h2 { font-size: clamp(28px, 4.2vw, 42px); line-height: 1.05; font-stretch: condensed; }
+h3 { font-size: 20px; line-height: 1.2; }
+p { margin: 0; }
+.lede { font-size: clamp(18px, 2.2vw, 21px); color: var(--muted); max-width: 58ch; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+:focus-visible { outline: 3px solid var(--tally); outline-offset: 3px; border-radius: 3px; }
+
+/* Buttons */
+.buy { display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: var(--tally); color: var(--tally-ink); font: 700 18px/1 var(--body); padding: 18px 26px; border-radius: 6px; border: 0; cursor: pointer; text-decoration: none; transition: transform .15s ease, box-shadow .15s ease; box-shadow: 0 1px 0 rgba(0,0,0,.08); }
+.buy:hover { transform: translateY(-1px); box-shadow: 0 6px 18px -8px var(--tally); }
+.buy .price-tag { font: 700 15px/1 var(--mono); padding: 6px 8px; border-radius: 4px; background: color-mix(in srgb, var(--tally-ink) 18%, transparent); }
+.ghost { display: inline-flex; align-items: center; gap: 8px; padding: 17px 20px; border-radius: 6px; border: 1px solid var(--rule); background: transparent; color: var(--ink); font: 600 16px/1 var(--body); text-decoration: none; }
+.ghost:hover { border-color: var(--ink); }
+.cta-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.assure { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); list-style: none; padding: 0; margin: 0; }
+.assure li::before { content: "✓ "; color: var(--seg-proof); font-weight: 700; }
+
+/* Header */
+.bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 18px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font: 700 14px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+.rec { width: 10px; height: 10px; border-radius: 50%; background: var(--tally); animation: blink 1.6s steps(1) infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+.bar a.ghost { padding: 10px 14px; font-size: 14px; }
+
+/* Hero */
+.hero { padding-block: 32px 72px; display: grid; gap: 40px; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); align-items: center; }
+.hero-copy { display: grid; gap: 22px; }
+@media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); } }
+
+/* Board */
+.board-card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 18px; display: grid; gap: 12px; box-shadow: 0 30px 60px -40px rgba(0,0,0,.35); }
+.board-head { display: flex; justify-content: space-between; gap: 10px; font: 600 12px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); flex-wrap: wrap; }
+.board { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.dow { font: 600 10px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-left: 2px; }
+.cell { border: 1px solid var(--rule); border-top: 3px solid var(--c); border-radius: 4px; padding: 7px 7px 9px; background: var(--field); display: grid; gap: 4px; align-content: start; min-height: 92px; opacity: 0; transform: translateY(6px); animation: drop .5s ease forwards; animation-delay: calc(var(--i) * 70ms + 200ms); }
+.cell b { font: 600 10px/1 var(--mono); color: var(--c); }
+.cell span { font-size: 11.5px; line-height: 1.3; overflow-wrap: break-word; hyphens: auto; }
+.cell.locked span { filter: blur(3.5px); user-select: none; }
+@keyframes drop { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cell { opacity: 1; transform: none; } }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); list-style: none; padding: 0; margin: 0; }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 9px; height: 9px; border-radius: 2px; background: var(--c); }
+@media (max-width: 560px) {
+  .board { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dow { display: none; }
+  .cell:nth-of-type(n+13) { display: none; }
+}
+
+/* Strip */
+.strip { border-block: 1px solid var(--rule); padding-block: 22px; }
+.strip ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.strip li { display: grid; gap: 2px; }
+.strip strong { font: 800 28px/1 var(--display); font-stretch: condensed; }
+.strip span { font-size: 14px; color: var(--muted); }
+
+/* Sample sheet */
+.split { display: grid; gap: 40px; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; }
+@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.split-copy { display: grid; gap: 18px; position: sticky; top: 24px; }
+@media (max-width: 900px) { .split-copy { position: static; } }
+.checks { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.checks li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; }
+.checks li::before { content: attr(data-n); font: 600 12px/26px var(--mono); color: var(--tally); }
+.sheet { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 22px; display: grid; gap: 16px; }
+.sheet .seg { font: 600 12px/1.3 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--seg-answers); }
+.sheet h3 { font-size: 24px; }
+.blk { display: grid; gap: 6px; }
+.blk h4 { margin: 0; font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.hook { font-weight: 700; font-size: 18px; border-left: 3px solid var(--tally); padding-left: 12px; }
+.shots { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; counter-reset: s; }
+.shots li { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 8px; font-size: 15px; counter-increment: s; }
+.shots li::before { content: "SH " counter(s, decimal-leading-zero); font: 500 12px/1.9 var(--mono); color: var(--muted); }
+.caption { background: var(--field); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; font-size: 14px; overflow-wrap: anywhere; }
+.kw { font: 500 13px/1.3 var(--mono); color: var(--seg-answers); }
+.kw mark { background: color-mix(in srgb, var(--seg-answers) 16%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
+
+/* Steps & reasons */
+.steps { list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); counter-reset: step; }
+.steps li { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 22px; display: grid; gap: 8px; counter-increment: step; align-content: start; }
+.steps li::before { content: "Step " counter(step); font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--tally); }
+.reasons { display: grid; gap: 28px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-top: 32px; }
+.reasons div { display: grid; gap: 8px; align-content: start; border-top: 3px solid var(--c); padding-top: 16px; }
+.reasons .stat { font: 800 40px/1 var(--display); font-stretch: condensed; color: var(--c); }
+.src { font-size: 12px; color: var(--muted); margin-top: 20px; }
+
+/* Compare */
+.compare { width: 100%; border-collapse: collapse; margin-top: 28px; font-size: 15px; min-width: 520px; }
+.table-wrap { overflow-x: auto; }
+.compare th, .compare td { text-align: left; padding: 14px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.compare th { font: 600 12px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.compare td:first-child { color: var(--muted); }
+.compare .us { font-weight: 700; }
+.compare tbody .us { background: color-mix(in srgb, var(--tally) 7%, transparent); }
+
+/* Reviews */
+.reviews { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: baseline; }
+.stars { font: 800 34px/1 var(--display); }
+
+/* FAQ */
+.faq { display: grid; gap: 10px; margin-top: 28px; max-width: 780px; }
+.faq details { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 0 18px; }
+.faq summary { cursor: pointer; list-style: none; padding: 18px 28px 18px 0; font-weight: 700; position: relative; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; position: absolute; right: 0; top: 14px; font: 400 24px/1 var(--mono); color: var(--muted); }
+.faq details[open] summary::after { content: "−"; }
+.faq details p { padding-bottom: 18px; color: var(--muted); max-width: 65ch; }
+
+/* Final */
+.final { background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: clamp(24px, 5vw, 56px); display: grid; gap: 20px; justify-items: start; }
+.final .big-price { font: 800 clamp(48px, 9vw, 88px)/1 var(--display); font-stretch: condensed; }
+footer { padding-block: 40px 120px; font-size: 14px; color: var(--muted); }
+
+/* Sticky mobile bar */
+.sticky { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-top: 1px solid var(--rule); display: flex; gap: 12px; align-items: center; justify-content: space-between; transform: translateY(110%); transition: transform .25s ease; z-index: 10; }
+.sticky.show { transform: none; }
+.sticky .buy { padding: 14px 18px; font-size: 16px; }
+.sticky-name { font-size: 14px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 901px) { .sticky { display: none; } }
+</style>
+</head>
+<body>
+
+<header class="wrap bar">
+  <span class="brand"><span class="rec" aria-hidden="true"></span>Episodic</span>
+  <a class="ghost" href="https://claude.ai/artifact/Jp4VkajQmTCBWsNxQjYJ1a" target="_blank" rel="noopener">Try it free</a>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div class="hero-copy">
+      <p class="eyebrow">For local businesses on TikTok, Reels &amp; Shorts</p>
+      <h1>Never wonder what to post again.</h1>
+      <p class="lede">Episodic turns your business into a 30-day show. Every episode comes with the hook, the shots to film on your phone, and a caption that starts with what your customers type into TikTok and Instagram search.</p>
+      <div class="cta-row">
+        <a class="buy" href="#buy" data-gumroad-action="buy">Unlock all 30 episodes <span class="price-tag" data-gumroad-field="price">$9</span></a>
+        <a class="ghost" href="https://claude.ai/artifact/Jp4VkajQmTCBWsNxQjYJ1a" target="_blank" rel="noopener">See 3 free episodes first</a>
+      </div>
+      <ul class="assure">
+        <li>One-time payment</li>
+        <li>Instant unlock code</li>
+        <li>Unlimited businesses</li>
+        <li>30-day refund</li>
+      </ul>
+    </div>
+
+    <figure class="board-card" style="margin:0" aria-label="Example: the first two weeks of a season for a bakery in San Antonio">
+      <div class="board-head"><span>Rosa's Panadería · San Antonio</span><span>Weeks 1–2 of 4</span></div>
+      <div class="board" aria-hidden="true">
+        <span class="dow">Mon</span><span class="dow">Tue</span><span class="dow">Wed</span><span class="dow">Thu</span><span class="dow">Fri</span><span class="dow">Sat</span><span class="dow">Sun</span>
+        <div class="cell" style="--c:var(--seg-answers);--i:0"><b>EP 01</b><span>How to choose a bakery in San Antonio</span></div>
+        <div class="cell" style="--c:var(--seg-mundane);--i:1"><b>EP 02</b><span>Opening up at 5:45am</span></div>
+        <div class="cell" style="--c:var(--seg-dayn);--i:2"><b>EP 03</b><span>Day 1: making every customer's day better</span></div>
+        <div class="cell" style="--c:var(--seg-proof);--i:3"><b>EP 04</b><span>Reading our newest review out loud</span></div>
+        <div class="cell" style="--c:var(--seg-insider);--i:4"><b>EP 05</b><span>3 things I'd never do as a baker</span></div>
+        <div class="cell" style="--c:var(--seg-answers);--i:5"><b>EP 06</b><span>How much do fresh conchas really cost?</span></div>
+        <div class="cell" style="--c:var(--seg-dayn);--i:6"><b>EP 07</b><span>Day 2: this one surprised me</span></div>
+        <div class="cell" style="--c:var(--seg-answers);--i:7"><b>EP 08</b><span>4 questions to ask before you order</span></div>
+        <div class="cell" style="--c:var(--seg-mundane);--i:8"><b>EP 09</b><span>The part of the job nobody films</span></div>
+        <div class="cell" style="--c:var(--seg-dayn);--i:9"><b>EP 10</b><span>Day 3: trying one new conchas idea</span></div>
+        <div class="cell locked" style="--c:var(--seg-proof);--i:10"><b>EP 11</b><span>The review that made our week</span></div>
+        <div class="cell locked" style="--c:var(--seg-insider);--i:11"><b>EP 12</b><span>Industry secret, conchas edition</span></div>
+        <div class="cell locked" style="--c:var(--seg-answers);--i:12"><b>EP 13</b><span>The mistake everyone makes</span></div>
+        <div class="cell locked" style="--c:var(--seg-dayn);--i:13"><b>EP 14</b><span>Day 4: you picked this one</span></div>
+      </div>
+      <ul class="legend">
+        <li style="--c:var(--seg-answers)"><i></i>Ask a baker</li>
+        <li style="--c:var(--seg-mundane)"><i></i>Everyday, made cinematic</li>
+        <li style="--c:var(--seg-dayn)"><i></i>Day N of…</li>
+        <li style="--c:var(--seg-proof)"><i></i>Real customers</li>
+        <li style="--c:var(--seg-insider)"><i></i>Insider takes</li>
+      </ul>
+      <figcaption class="small muted">Example season. Yours is built from your business name, type, city and specialty.</figcaption>
+    </figure>
+  </div>
+
+  <div class="strip">
+    <div class="wrap">
+      <ul>
+        <li><strong>30 episodes</strong><span>A full month, one post a day</span></li>
+        <li><strong>5 segments</strong><span>Recurring, so viewers come back</span></li>
+        <li><strong>&lt;15 min</strong><span>To film each one on a phone</span></li>
+        <li><strong>20 seconds</strong><span>To plan the whole season</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap split">
+      <div class="split-copy">
+        <p class="eyebrow">What you get, every episode</p>
+        <h2>A call sheet for each day, not a list of vague ideas.</h2>
+        <ul class="checks">
+          <li data-n="01"><span><strong>A hook for the first 2 seconds.</strong> Specific to your shop and your city, the part that stops the scroll.</span></li>
+          <li data-n="02"><span><strong>A shot list.</strong> 3–4 shots you can film alone, on your phone, with no crew or editing skills.</span></li>
+          <li data-n="03"><span><strong>A search-first caption.</strong> A real local search phrase in the first 50 characters, where TikTok and your customers both look.</span></li>
+          <li data-n="04"><span><strong>Hashtags and a call to action.</strong> Ready to copy with one tap.</span></li>
+        </ul>
+      </div>
+
+      <article class="sheet" aria-label="Sample episode">
+        <span class="seg">EP 01 · Mon · Ask a baker</span>
+        <h3>How to choose a bakery in San Antonio</h3>
+        <div class="blk"><h4>Say or show in the first 2 seconds</h4><p class="hook">“If you're searching for a bakery in San Antonio, watch this first.”</p></div>
+        <div class="blk"><h4>Shot list</h4>
+          <ol class="shots">
+            <li>Talking head, the question written as on-screen text</li>
+            <li>Cut to a quick demo that proves the answer</li>
+            <li>Show a real price, tool, or before/after</li>
+            <li>Recap the answer in one sentence on screen</li>
+          </ol>
+        </div>
+        <div class="blk"><h4>Search phrase this targets</h4><span class="kw"><mark>best bakery in San Antonio</mark></span></div>
+        <div class="blk"><h4>Caption</h4><p class="caption">Best bakery in San Antonio | How to choose a bakery in San Antonio. A baker in San Antonio answers it honestly, no sales pitch. 📍 Rosa's Panadería, San Antonio<br><br>#sanantonio #bakery #sanantoniobakery #rosaspanaderia #smallbusiness</p></div>
+        <p class="small muted">End with: “Save this before you order.”</p>
+      </article>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <p class="eyebrow">How it works</p>
+      <h2>Try it, unlock it, film it.</h2>
+      <ol class="steps">
+        <li><h3>Plan your free preview</h3><p class="muted">Enter your business name, type, city and what you're known for. Your first 3 episodes appear instantly.</p></li>
+        <li><h3>Unlock the season</h3><p class="muted">Pay once. Your unlock code shows up on the purchase page and in your receipt email.</p></li>
+        <li><h3>Film one a day</h3><p class="muted">Batch 5–7 episodes in one weekly session. Copy each caption with one tap and post.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <p class="eyebrow">Why this format works in 2026</p>
+      <h2>Built around how people find local businesses now.</h2>
+      <div class="reasons">
+        <div style="--c:var(--seg-answers)"><span class="stat">49%</span><h3>of US consumers have searched TikTok like Google</h3><p class="muted">Every caption opens with a phrase locals actually type, so your videos show up when they search.</p></div>
+        <div style="--c:var(--seg-dayn)"><span class="stat">57%</span><h3>prefer brands that post original series</h3><p class="muted">Recurring segments and a numbered "Day N" arc give viewers a reason to come back tomorrow.</p></div>
+        <div style="--c:var(--seg-proof)"><span class="stat">70%</span><h3>look for real customer content before buying</h3><p class="muted">A weekly segment built on your real reviews. Episodic never invents testimonials.</p></div>
+      </div>
+      <p class="src">Sources: Sprout Social and Metricool TikTok SEO reports (2026), iQfluence Social Trends 2026, Dash Social Trends Report 2026.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <p class="eyebrow">Compared to the alternatives</p>
+      <h2>Less than an hour of a freelancer's time.</h2>
+      <div class="table-wrap">
+        <table class="compare">
+          <thead><tr><th scope="col"></th><th scope="col" class="us">Episodic</th><th scope="col">Social media tools</th><th scope="col">Freelancer</th></tr></thead>
+          <tbody>
+            <tr><td>Cost</td><td class="us"><span data-gumroad-field="price">$9</span> once</td><td>$19–$109 / month</td><td>$500+ / month</td></tr>
+            <tr><td>Built for</td><td class="us">One local business owner</td><td>Marketers managing many accounts</td><td>Whoever hires them</td></tr>
+            <tr><td>Tells you what to film</td><td class="us">Yes, shot by shot</td><td>Rarely</td><td>Sometimes</td></tr>
+            <tr><td>Local search captions</td><td class="us">Every episode</td><td>Generic AI copy</td><td>Depends</td></tr>
+            <tr><td>Time to a month of content</td><td class="us">20 seconds</td><td>Hours of prompting</td><td>Days</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <p class="eyebrow">Reviews</p>
+      <div class="reviews">
+        <span class="stars" data-gumroad-field="rating">New</span>
+        <span class="muted" data-gumroad-field="review-count">Be the first to review</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <p class="eyebrow">Questions</p>
+      <h2>Before you buy</h2>
+      <div class="faq">
+        <details><summary>Who films the videos?</summary><p>You do, on your phone. That's the point: audiences trust real owners more than polished or AI-made ads. Episodic plans every episode so you only have to press record.</p></details>
+        <details><summary>Does it work for my kind of business?</summary><p>If you serve local customers, yes: bakeries, salons, gyms, barbers, cafés, trades, studios, shops. Try the free preview with your own details first and see.</p></details>
+        <details><summary>How do I get my unlock code?</summary><p>Right after checkout, on your purchase page and in your receipt email. Enter it in the "Unlock the full season" box in Episodic.</p></details>
+        <details><summary>Can I plan more than one business?</summary><p>Yes. One unlock covers every business you plan on that device, as many times as you like.</p></details>
+        <details><summary>Is this a subscription?</summary><p>No. You pay once. There's nothing to cancel.</p></details>
+        <details><summary>What happens to the information I type in?</summary><p>Nothing leaves your device. Episodic runs entirely in your browser.</p></details>
+        <details><summary>What if it's not for me?</summary><p>Email within 30 days of purchase and you'll get a full refund.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="buy" style="padding-top:0">
+    <div class="wrap">
+      <div class="final">
+        <p class="eyebrow" style="margin:0" data-gumroad-field="name">Episodic: Full Season Unlock</p>
+        <span class="big-price" data-gumroad-field="price">$9</span>
+        <h2>Your next 30 days of posts, planned tonight.</h2>
+        <p class="lede">All 30 episodes, unlimited businesses, and one-tap copy for every caption.</p>
+        <div class="cta-row">
+          <button class="buy" type="button" data-gumroad-action="buy">Unlock all 30 episodes</button>
+          <a class="ghost" href="https://claude.ai/artifact/Jp4VkajQmTCBWsNxQjYJ1a" target="_blank" rel="noopener">Try it free first</a>
+        </div>
+        <ul class="assure"><li>One-time payment</li><li>Instant unlock code</li><li>30-day refund</li></ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">Episodic runs in your browser. Payments are processed securely by Gumroad.</footer>
+
+<div class="sticky" id="sticky" aria-hidden="true">
+  <span class="sticky-name">Episodic · 30 episodes</span>
+  <a class="buy" href="#buy" data-gumroad-action="buy" tabindex="-1">Unlock <span class="price-tag" data-gumroad-field="price">$9</span></a>
+</div>
+
+<script>
+(function () {
+  var bar = document.getElementById("sticky");
+  var hero = document.querySelector(".hero .buy");
+  var final = document.getElementById("buy");
+  if (!bar || !hero || !("IntersectionObserver" in window)) return;
+  var heroVisible = true, finalVisible = false;
+  function update() {
+    var show = !heroVisible && !finalVisible;
+    bar.classList.toggle("show", show);
+    bar.setAttribute("aria-hidden", show ? "false" : "true");
+    bar.querySelector("a").tabIndex = show ? 0 : -1;
+  }
+  new IntersectionObserver(function (e) { heroVisible = e[0].isIntersecting; update(); }).observe(hero);
+  new IntersectionObserver(function (e) { finalVisible = e[0].isIntersecting; update(); }).observe(final);
+})();
+</script>
+</body>
+</html>
